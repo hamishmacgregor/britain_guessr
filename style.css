@@ -1,10 +1,11 @@
 :root {
-  --bg: #eaf2ef;
-  --land: #f7f3e8;
-  --land-stroke: #2d4a3e;
-  --water: #bcd9e0;
-  --river: #4a7e8a;
-  --motorway: #003189;
+  --bg: #d8eef5;
+  --land: #7aac6e;
+  --land-stroke: #4a7a40;
+  --water: #a8d4e6;
+  --river: #a8d4e6;
+  --motorway: #ffe000;
+  --border: #4a5a3a;
   --accent: #0b3d2e;
   --accent-strong: #073023;
   --correct: #2e8b57;
@@ -46,7 +47,7 @@ html, body {
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background: var(--bg);
+  background: var(--water);
 }
 
 .card {

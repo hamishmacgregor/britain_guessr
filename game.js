@@ -105,46 +105,64 @@
     map = L.map('map', {
       zoomControl: true,
       attributionControl: false,
-      maxBounds: UK_BOUNDS.pad(0.3),
-      maxBoundsViscosity: 0.9,
+      maxBounds: UK_BOUNDS.pad(0.08),
+      maxBoundsViscosity: 1.0,
       minZoom: 5,
       maxZoom: 9,
     });
     map.fitBounds(UK_BOUNDS);
 
-    const [coastline, rivers, motorways] = await Promise.all([
-      fetch('data/uk_coastline.geojson').then((r) => r.json()),
+    const [land, borders, rivers, motorways] = await Promise.all([
+      fetch('data/uk_land.geojson').then((r) => r.json()),
+      fetch('data/uk_borders.geojson').then((r) => r.json()),
       fetch('data/uk_rivers.geojson').then((r) => r.json()),
       fetch('data/uk_motorways.geojson').then((r) => r.json()),
     ]);
 
-    L.geoJSON(coastline, {
+    // Land fill — always shown
+    L.geoJSON(land, {
       style: {
         color: css('--land-stroke'),
-        weight: 1,
-        opacity: 0.9,
-        fill: false,
+        weight: 0.8,
+        fillColor: css('--land'),
+        fillOpacity: 1,
       },
       interactive: false,
     }).addTo(map);
 
+    // National borders — always shown
+    L.geoJSON(borders, {
+      style: (f) => ({
+        color: css('--border'),
+        weight: f.properties.type === 'international' ? 1 : 0.8,
+        dashArray: '4 4',
+        opacity: 0.7,
+        fill: false,
+      }),
+      interactive: false,
+    }).addTo(map);
+
+    // Rivers — optional overlay
     state.riversGeoLayer = L.geoJSON(rivers, {
       style: {
         color: css('--river'),
-        weight: 1.2,
+        weight: 2,
         opacity: 0.85,
       },
       interactive: false,
     });
 
-    state.motorwaysGeoLayer = L.geoJSON(motorways, {
-      style: {
-        color: css('--motorway'),
-        weight: 1.8,
-        opacity: 0.85,
-      },
-      interactive: false,
-    });
+    // Motorways — optional overlay, rendered as yellow with thin black outline
+    state.motorwaysGeoLayer = L.layerGroup([
+      L.geoJSON(motorways, {
+        style: { color: '#000', weight: 3.5, opacity: 0.55, fill: false },
+        interactive: false,
+      }),
+      L.geoJSON(motorways, {
+        style: { color: css('--motorway'), weight: 2, opacity: 1, fill: false },
+        interactive: false,
+      }),
+    ]);
 
     map.on('click', onMapClick);
   }
@@ -369,10 +387,14 @@
     startRound();
   }
 
-  function backToStart() {
-    clearAllLayers();
+  function removeOverlays() {
     if (state.riversGeoLayer && map.hasLayer(state.riversGeoLayer)) map.removeLayer(state.riversGeoLayer);
     if (state.motorwaysGeoLayer && map.hasLayer(state.motorwaysGeoLayer)) map.removeLayer(state.motorwaysGeoLayer);
+  }
+
+  function backToStart() {
+    clearAllLayers();
+    removeOverlays();
     el.game.classList.add('hidden');
     el.start.classList.remove('hidden');
   }
