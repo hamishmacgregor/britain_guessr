@@ -25,9 +25,10 @@ No build step. All assets are static.
 index.html              # markup, loads Leaflet from CDN
 style.css               # responsive layout + map styling
 game.js                 # game loop, scoring, map setup
-data/places.json        # places (name, lat, lng, population)
-data/uk_outline.geojson # UK boundary (Natural Earth 1:50m, simplified)
-data/uk_rivers.geojson  # major rivers in UK bbox (Natural Earth 1:10m)
+data/places.json          # places (name, lat, lng, population)
+data/uk_coastline.geojson # UK coastline (Natural Earth 1:10m, clipped to UK bbox)
+data/uk_rivers.geojson    # major rivers in UK bbox (Natural Earth 1:10m)
+data/uk_motorways.geojson # M-classified motorways (Natural Earth 1:10m roads)
 ```
 
 ## Place data

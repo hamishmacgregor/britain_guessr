@@ -3,7 +3,8 @@
   --land: #f7f3e8;
   --land-stroke: #2d4a3e;
   --water: #bcd9e0;
-  --river: #6ea4b0;
+  --river: #4a7e8a;
+  --motorway: #003189;
   --accent: #0b3d2e;
   --accent-strong: #073023;
   --correct: #2e8b57;
@@ -105,6 +106,50 @@ html, body {
   font-size: 0.8rem;
   color: var(--muted);
 }
+
+.overlay-group {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.overlay-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.7rem;
+  border: 2px solid rgba(11, 61, 46, 0.15);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  user-select: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.overlay-btn:hover { border-color: var(--accent); }
+
+.overlay-btn:has(input:checked) {
+  border-color: var(--accent);
+  background: rgba(11, 61, 46, 0.06);
+}
+
+.overlay-btn input[type="checkbox"] {
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.overlay-icon {
+  display: inline-block;
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.rivers-icon { background: var(--river); }
+.motorways-icon { background: var(--motorway); }
 
 button.primary {
   appearance: none;
