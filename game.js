@@ -38,7 +38,9 @@
     game: document.getElementById('game-screen'),
     startBtn: document.getElementById('start-btn'),
     nextBtn: document.getElementById('next-btn'),
-    restartBtn: document.getElementById('restart-btn'),
+    viewResultsBtn: document.getElementById('view-results-btn'),
+    backMenuBtn: document.getElementById('back-menu-btn'),
+    quitBtn: document.getElementById('quit-btn'),
     showRivers: document.getElementById('show-rivers'),
     showMotorways: document.getElementById('show-motorways'),
     roundCounter: document.getElementById('round-counter'),
@@ -48,12 +50,18 @@
     hint: document.getElementById('hint'),
     resultReadout: document.getElementById('result-readout'),
     distanceReadout: document.getElementById('distance-readout'),
-    breakdown: document.getElementById('breakdown'),
-    breakdownDetails: document.getElementById('breakdown-details'),
     finalTotal: document.getElementById('final-total'),
     promptPlaying: document.getElementById('prompt-playing'),
     promptResults: document.getElementById('prompt-results'),
     difficultyBtns: document.querySelectorAll('.difficulty-btn'),
+    resultsOverlay: document.getElementById('results-overlay'),
+    resultsList: document.getElementById('results-list'),
+    resultsTotalKm: document.getElementById('results-total-km'),
+    overlayViewMapBtn: document.getElementById('overlay-view-map-btn'),
+    overlayBackMenuBtn: document.getElementById('overlay-back-menu-btn'),
+    confirmModal: document.getElementById('confirm-modal'),
+    confirmQuitBtn: document.getElementById('confirm-quit-btn'),
+    confirmCancelBtn: document.getElementById('confirm-cancel-btn'),
   };
 
   let map;
@@ -266,6 +274,7 @@
     el.resultReadout.classList.add('hidden');
     el.nextBtn.classList.add('hidden');
     el.hint.classList.remove('hidden');
+    el.quitBtn.classList.remove('hidden');
 
     const place = state.queue[state.roundIndex];
     el.placeName.textContent = place.name;
@@ -323,27 +332,50 @@
 
     map.fitBounds(UK_BOUNDS, { animate: true });
 
-    // Swap header + footer to results mode.
+    // Swap header to results mode; hide playing-state footer controls.
     el.promptPlaying.classList.add('hidden');
     el.promptResults.classList.remove('hidden');
     el.finalTotal.textContent = Math.round(state.totalKm).toLocaleString();
     el.hint.classList.add('hidden');
     el.resultReadout.classList.add('hidden');
     el.nextBtn.classList.add('hidden');
-    el.restartBtn.classList.remove('hidden');
+    el.quitBtn.classList.add('hidden');
 
-    el.breakdown.innerHTML = '';
+    // Populate and show the results overlay; map-view buttons stay hidden behind it.
+    el.resultsList.innerHTML = '';
     for (const r of state.rounds) {
       const li = document.createElement('li');
       li.innerHTML = `<span class="place"></span><span class="dist"></span>`;
       li.querySelector('.place').textContent = r.truth.name;
       li.querySelector('.dist').textContent = formatKm(r.km);
-      el.breakdown.appendChild(li);
+      el.resultsList.appendChild(li);
     }
-    el.breakdownDetails.classList.remove('hidden');
-    el.breakdownDetails.open = false;
+    el.resultsTotalKm.textContent = formatKm(state.totalKm);
+    showResultsOverlay();
 
     state.awaitingGuess = false;
+  }
+
+  function showResultsOverlay() {
+    el.resultsOverlay.classList.remove('hidden');
+    el.viewResultsBtn.classList.add('hidden');
+    el.backMenuBtn.classList.add('hidden');
+  }
+
+  function hideResultsOverlay() {
+    el.resultsOverlay.classList.add('hidden');
+    el.viewResultsBtn.classList.remove('hidden');
+    el.backMenuBtn.classList.remove('hidden');
+    // Recompute map size in case overlay changed the available area.
+    setTimeout(() => map.invalidateSize(), 0);
+  }
+
+  function openQuitConfirm() {
+    el.confirmModal.classList.remove('hidden');
+  }
+
+  function closeQuitConfirm() {
+    el.confirmModal.classList.add('hidden');
   }
 
   function applyOverlays() {
@@ -378,8 +410,10 @@
     el.game.classList.remove('hidden');
     el.promptPlaying.classList.remove('hidden');
     el.promptResults.classList.add('hidden');
-    el.restartBtn.classList.add('hidden');
-    el.breakdownDetails.classList.add('hidden');
+    el.resultsOverlay.classList.add('hidden');
+    el.viewResultsBtn.classList.add('hidden');
+    el.backMenuBtn.classList.add('hidden');
+    el.confirmModal.classList.add('hidden');
 
     // Leaflet needs a size invalidation after the container becomes visible.
     setTimeout(() => { map.invalidateSize(); applyOverlays(); }, 0);
@@ -395,6 +429,11 @@
   function backToStart() {
     clearAllLayers();
     removeOverlays();
+    el.resultsOverlay.classList.add('hidden');
+    el.confirmModal.classList.add('hidden');
+    el.viewResultsBtn.classList.add('hidden');
+    el.backMenuBtn.classList.add('hidden');
+    el.quitBtn.classList.add('hidden');
     el.game.classList.add('hidden');
     el.start.classList.remove('hidden');
   }
@@ -414,7 +453,16 @@
 
     el.startBtn.addEventListener('click', startGame);
     el.nextBtn.addEventListener('click', nextRound);
-    el.restartBtn.addEventListener('click', backToStart);
+    el.viewResultsBtn.addEventListener('click', showResultsOverlay);
+    el.overlayViewMapBtn.addEventListener('click', hideResultsOverlay);
+    el.backMenuBtn.addEventListener('click', backToStart);
+    el.overlayBackMenuBtn.addEventListener('click', backToStart);
+    el.quitBtn.addEventListener('click', openQuitConfirm);
+    el.confirmCancelBtn.addEventListener('click', closeQuitConfirm);
+    el.confirmQuitBtn.addEventListener('click', () => {
+      closeQuitConfirm();
+      backToStart();
+    });
   }
 
   boot().catch((err) => {
