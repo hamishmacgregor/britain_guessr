@@ -170,6 +170,39 @@ button.primary {
 button.primary:hover { background: var(--accent-strong); }
 button.primary:active { transform: scale(0.98); }
 
+button.secondary {
+  appearance: none;
+  background: white;
+  color: var(--accent);
+  border: 2px solid var(--accent);
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.7rem 1.25rem;
+  border-radius: 999px;
+  cursor: pointer;
+  min-width: 7rem;
+  touch-action: manipulation;
+  font-family: inherit;
+}
+
+button.secondary:hover { background: rgba(11, 61, 46, 0.06); }
+button.secondary:active { transform: scale(0.98); }
+
+button.ghost {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+button.ghost:hover { color: var(--text); }
+
 /* --- Game screen --- */
 
 #game-screen { background: var(--water); }
@@ -232,6 +265,13 @@ button.primary:active { transform: scale(0.98); }
   font-variant-numeric: tabular-nums;
 }
 
+#map-wrap {
+  flex: 1;
+  position: relative;
+  display: flex;
+  min-height: 0;
+}
+
 #map {
   flex: 1;
   width: 100%;
@@ -240,6 +280,121 @@ button.primary:active { transform: scale(0.98); }
 }
 
 .leaflet-container { background: var(--water); outline: none; font-family: inherit; }
+
+/* --- Results overlay over the map --- */
+
+#results-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 61, 46, 0.35);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+
+.results-card {
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: 18px;
+  padding: 1.5rem 1.25rem 1.25rem;
+  max-width: 26rem;
+  width: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.results-card h2 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  color: var(--accent);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+#results-list {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+#results-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.25rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  font-size: 0.95rem;
+}
+
+#results-list li:last-child { border-bottom: none; }
+#results-list li .place { color: var(--text); }
+#results-list li .dist { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.results-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0.25rem;
+  margin-top: 0.5rem;
+  border-top: 2px solid var(--accent);
+  font-weight: 700;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+.results-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.results-actions button { flex: 1; min-width: 0; }
+
+/* --- Confirm modal --- */
+
+#confirm-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 2000;
+}
+
+.modal-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem 1.25rem 1.25rem;
+  max-width: 22rem;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  color: var(--accent);
+}
+
+.modal-card p { margin: 0 0 1.25rem; color: var(--muted); }
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.modal-actions button { flex: 1; min-width: 0; }
 
 #game-footer {
   flex-shrink: 0;
@@ -263,36 +418,6 @@ button.primary:active { transform: scale(0.98); }
 }
 
 #distance-readout { color: var(--accent); }
-
-#breakdown-details {
-  flex-basis: 100%;
-  font-size: 0.9rem;
-  margin: 0;
-  max-height: 35vh;
-  overflow-y: auto;
-}
-
-#breakdown-details summary {
-  cursor: pointer;
-  color: var(--muted);
-  padding: 0.25rem 0;
-  user-select: none;
-}
-
-#breakdown {
-  margin: 0.5rem 0 0;
-  padding-left: 1.25rem;
-}
-
-#breakdown li {
-  padding: 0.2rem 0;
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-#breakdown li .place { color: var(--text); }
-#breakdown li .dist { color: var(--muted); font-variant-numeric: tabular-nums; }
 
 /* --- Map markers --- */
 

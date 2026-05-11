@@ -65,20 +65,45 @@
           <span class="prompt-main"><span id="final-total">—</span> km</span>
         </div>
       </header>
-      <div id="map" role="application" aria-label="Map of the United Kingdom"></div>
+      <div id="map-wrap">
+        <div id="map" role="application" aria-label="Map of the United Kingdom"></div>
+        <div id="results-overlay" class="hidden">
+          <div class="results-card">
+            <h2>Results</h2>
+            <ol id="results-list"></ol>
+            <div class="results-total">
+              <span>Total</span>
+              <span id="results-total-km">— km</span>
+            </div>
+            <div class="results-actions">
+              <button id="overlay-view-map-btn" class="primary">View map</button>
+              <button id="overlay-back-menu-btn" class="secondary">Back to menu</button>
+            </div>
+          </div>
+        </div>
+      </div>
       <footer id="game-footer">
         <div id="result-readout" class="hidden">
           <span id="distance-readout">— km</span>
         </div>
-        <button id="next-btn" class="primary hidden">Next</button>
-        <button id="restart-btn" class="primary hidden">Play again</button>
         <p id="hint" class="hint">Tap the map to place your guess</p>
-        <details id="breakdown-details" class="hidden">
-          <summary>Round-by-round</summary>
-          <ol id="breakdown"></ol>
-        </details>
+        <button id="next-btn" class="primary hidden">Next</button>
+        <button id="view-results-btn" class="primary hidden">View results</button>
+        <button id="back-menu-btn" class="secondary hidden">Back to menu</button>
+        <button id="quit-btn" class="ghost hidden">Quit</button>
       </footer>
     </section>
+
+    <div id="confirm-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+      <div class="modal-card">
+        <h2 id="confirm-title">Quit?</h2>
+        <p>Your current game progress will be lost.</p>
+        <div class="modal-actions">
+          <button id="confirm-quit-btn" class="primary">Quit</button>
+          <button id="confirm-cancel-btn" class="secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
 
   </div>
 
