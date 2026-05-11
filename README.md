@@ -26,9 +26,10 @@ index.html              # markup, loads Leaflet from CDN
 style.css               # responsive layout + map styling
 game.js                 # game loop, scoring, map setup
 data/places.json          # places (name, lat, lng, population)
-data/uk_coastline.geojson # UK coastline (Natural Earth 1:10m, clipped to UK bbox)
+data/uk_land.geojson      # land polygons in UK bbox (Natural Earth 1:10m map units)
+data/uk_borders.geojson   # national borders: England/Wales, England/Scotland, NI/Ireland
 data/uk_rivers.geojson    # major rivers in UK bbox (Natural Earth 1:10m)
-data/uk_motorways.geojson # M-classified motorways (Natural Earth 1:10m roads)
+data/uk_motorways.geojson # M-classified motorways in UK (Natural Earth 1:10m roads)
 ```
 
 ## Place data
