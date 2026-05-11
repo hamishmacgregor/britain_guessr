@@ -66,7 +66,7 @@
     return 2 * R * Math.asin(Math.sqrt(h));
   }
 
-  function shuffle(arr) {
+  function shuffle(arr) { 
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -82,9 +82,9 @@
 
   function formatPopulation(p) {
     if (!p) return '';
-    if (p >= 1_000_000) return '~' + (p / 1_000_000).toFixed(p >= 10_000_000 ? 0 : 1) + 'M people';
-    if (p >= 100_000) return '~' + Math.round(p / 1000) + 'k people';
-    return '~' + p.toLocaleString() + ' people';
+    // round to 2 sigificant digits, no suffixes, not scientific notation e.g. 1,234,456 -> "pop. 1,200,000" and 12,345 -> "pop. 12,000"
+    const rounded = Number(p.toPrecision(2));
+    return 'pop. ' + rounded.toLocaleString();
   }
 
   function divIcon(className, size) {
