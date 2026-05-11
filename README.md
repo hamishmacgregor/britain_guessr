@@ -32,8 +32,25 @@ data/uk_rivers.geojson  # major rivers in UK bbox (Natural Earth 1:10m)
 
 ## Place data
 
-The initial set is 50 hand-curated major UK cities and towns, each tagged with a rough population. To expand to a comprehensive list (and add difficulty tiers based on population), the [ONS Index of Place Names](https://geoportal.statistics.gov.uk/datasets/8f8b561f256b40c3a6df71e400bb54f0/about) is a good source — convert to the same `{name, lat, lng, population}` shape and replace `data/places.json`.
+`data/places.json` is derived from [GeoNames](https://www.geonames.org/) `cities15000` (all populated places with population ≥ 15,000), filtered to the UK. Each entry has:
+
+```jsonc
+{
+  "name": "Manchester",
+  "lat": 53.48095,
+  "lng": -2.23743,
+  "population": 395515,
+  "country": "England",       // England | Scotland | Wales | Northern Ireland
+  "difficulty": "easy",       // easy (≥150k) | medium (≥50k) | hard (≥15k)
+  "geonameid": 2643123,
+  "fcode": "PPLA2",
+  "exclude": true,             // optional; if set, the game skips this entry
+  "exclude_reason": "duplicate name (...)"
+}
+```
+
+Entries are pre-flagged with `exclude: true` when they are subdivisions of larger cities (e.g. Chelsea, Battersea) or share a name with another place in the dataset (e.g. Bangor in Wales vs Bangor in NI). They remain in the file for transparency — the game ignores them.
 
 ## Credits
 
-Map data © [Natural Earth](https://www.naturalearthdata.com/) (public domain). Map rendering by [Leaflet](https://leafletjs.com/).
+Map data © [Natural Earth](https://www.naturalearthdata.com/) (public domain). Place data from [GeoNames](https://www.geonames.org/) (CC BY 4.0). Map rendering by [Leaflet](https://leafletjs.com/).

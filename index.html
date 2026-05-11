@@ -17,6 +17,20 @@
       <div class="card">
         <h1>Britain Guessr</h1>
         <p>You'll be shown 10 UK places. Click on the map to guess where each one is. Lower total distance wins.</p>
+        <div class="difficulty-group" role="radiogroup" aria-label="Difficulty">
+          <button type="button" class="difficulty-btn" data-difficulty="easy">
+            <span class="d-label">Easy</span>
+            <span class="d-desc">Major cities (population &gt; 150k)</span>
+          </button>
+          <button type="button" class="difficulty-btn selected" data-difficulty="medium">
+            <span class="d-label">Medium</span>
+            <span class="d-desc">Towns &amp; cities (population &gt; 50k)</span>
+          </button>
+          <button type="button" class="difficulty-btn" data-difficulty="hard">
+            <span class="d-label">Hard</span>
+            <span class="d-desc">All places (population &gt; 15k)</span>
+          </button>
+        </div>
         <button id="start-btn" class="primary">Play</button>
       </div>
     </section>
@@ -27,9 +41,16 @@
           <span id="round-counter">1 / 10</span>
           <span id="total-so-far">0 km</span>
         </div>
-        <div class="prompt">
+        <div class="prompt" id="prompt-playing">
           <span class="prompt-label">Find:</span>
-          <span id="place-name">—</span>
+          <span class="prompt-main">
+            <span id="place-name">—</span>
+            <span id="place-population" class="place-population"></span>
+          </span>
+        </div>
+        <div class="prompt hidden" id="prompt-results">
+          <span class="prompt-label">Final score</span>
+          <span class="prompt-main"><span id="final-total">—</span> km</span>
         </div>
       </header>
       <div id="map" role="application" aria-label="Map of the United Kingdom"></div>
@@ -38,17 +59,13 @@
           <span id="distance-readout">— km</span>
         </div>
         <button id="next-btn" class="primary hidden">Next</button>
+        <button id="restart-btn" class="primary hidden">Play again</button>
         <p id="hint" class="hint">Tap the map to place your guess</p>
+        <details id="breakdown-details" class="hidden">
+          <summary>Round-by-round</summary>
+          <ol id="breakdown"></ol>
+        </details>
       </footer>
-    </section>
-
-    <section id="end-screen" class="screen hidden">
-      <div class="card">
-        <h1>Final score</h1>
-        <p class="total"><span id="final-total">—</span> km</p>
-        <ol id="breakdown"></ol>
-        <button id="restart-btn" class="primary">Play again</button>
-      </div>
     </section>
 
   </div>

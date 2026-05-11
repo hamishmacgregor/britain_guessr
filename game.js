@@ -4,6 +4,13 @@
   const ROUNDS = 10;
   const UK_BOUNDS = L.latLngBounds([49.7, -8.8], [61.0, 2.0]);
 
+  // Cumulative tiers: harder difficulty includes all easier-tier places too.
+  const DIFFICULTY_INCLUDES = {
+    easy: new Set(['easy']),
+    medium: new Set(['easy', 'medium']),
+    hard: new Set(['easy', 'medium', 'hard']),
+  };
+
   const styles = getComputedStyle(document.documentElement);
   const css = (name) => styles.getPropertyValue(name).trim();
 
@@ -12,28 +19,36 @@
     queue: [],
     roundIndex: 0,
     totalKm: 0,
-    breakdown: [],
+    rounds: [],
     awaitingGuess: false,
-    guessLayer: null,
-    answerLayer: null,
-    lineLayer: null,
+    difficulty: 'medium',
+    // Current round's transient layers (cleared on "Next").
+    currentGuessLayer: null,
+    currentAnswerLayer: null,
+    currentLineLayer: null,
+    // Persistent layers from completed rounds.
+    pastLayers: [],
   };
 
   const el = {
     start: document.getElementById('start-screen'),
     game: document.getElementById('game-screen'),
-    end: document.getElementById('end-screen'),
     startBtn: document.getElementById('start-btn'),
     nextBtn: document.getElementById('next-btn'),
     restartBtn: document.getElementById('restart-btn'),
     roundCounter: document.getElementById('round-counter'),
     totalSoFar: document.getElementById('total-so-far'),
     placeName: document.getElementById('place-name'),
+    placePopulation: document.getElementById('place-population'),
     hint: document.getElementById('hint'),
     resultReadout: document.getElementById('result-readout'),
     distanceReadout: document.getElementById('distance-readout'),
     breakdown: document.getElementById('breakdown'),
+    breakdownDetails: document.getElementById('breakdown-details'),
     finalTotal: document.getElementById('final-total'),
+    promptPlaying: document.getElementById('prompt-playing'),
+    promptResults: document.getElementById('prompt-results'),
+    difficultyBtns: document.querySelectorAll('.difficulty-btn'),
   };
 
   let map;
@@ -65,12 +80,19 @@
     return Math.round(km).toLocaleString() + ' km';
   }
 
-  function divIcon(className) {
+  function formatPopulation(p) {
+    if (!p) return '';
+    if (p >= 1_000_000) return '~' + (p / 1_000_000).toFixed(p >= 10_000_000 ? 0 : 1) + 'M people';
+    if (p >= 100_000) return '~' + Math.round(p / 1000) + 'k people';
+    return '~' + p.toLocaleString() + ' people';
+  }
+
+  function divIcon(className, size) {
     return L.divIcon({
       className: '',
-      html: `<div class="${className}"></div>`,
-      iconSize: [14, 14],
-      iconAnchor: [7, 7],
+      html: `<div class="marker-dot ${className}"></div>`,
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2],
     });
   }
 
@@ -112,13 +134,44 @@
     map.on('click', onMapClick);
   }
 
-  function clearRoundLayers() {
-    for (const key of ['guessLayer', 'answerLayer', 'lineLayer']) {
+  function clearCurrentLayers() {
+    for (const key of ['currentGuessLayer', 'currentAnswerLayer', 'currentLineLayer']) {
       if (state[key]) {
         map.removeLayer(state[key]);
         state[key] = null;
       }
     }
+  }
+
+  function clearAllLayers() {
+    clearCurrentLayers();
+    for (const layer of state.pastLayers) map.removeLayer(layer);
+    state.pastLayers = [];
+  }
+
+  function demoteCurrentToPast(truth) {
+    // Convert the current round's answer marker into a small persistent past-answer marker.
+    // Also drops the guess marker and the connecting line (they're not kept across rounds).
+    if (state.currentAnswerLayer) map.removeLayer(state.currentAnswerLayer);
+    if (state.currentGuessLayer) map.removeLayer(state.currentGuessLayer);
+    if (state.currentLineLayer) map.removeLayer(state.currentLineLayer);
+    state.currentAnswerLayer = null;
+    state.currentGuessLayer = null;
+    state.currentLineLayer = null;
+
+    const m = L.marker([truth.lat, truth.lng], {
+      icon: divIcon('answer-marker-past', 9),
+      interactive: false,
+      keyboard: false,
+    })
+      .bindTooltip(truth.name, {
+        permanent: true,
+        direction: 'right',
+        offset: [6, 0],
+        className: 'past-label',
+      })
+      .addTo(map);
+    state.pastLayers.push(m);
   }
 
   function onMapClick(e) {
@@ -130,19 +183,24 @@
     const km = haversineKm(guess, truth);
 
     state.totalKm += km;
-    state.breakdown.push({ name: truth.name, km });
+    state.rounds.push({ truth, guess, km });
 
-    state.guessLayer = L.marker([guess.lat, guess.lng], {
-      icon: divIcon('guess-marker'),
+    state.currentGuessLayer = L.marker([guess.lat, guess.lng], {
+      icon: divIcon('guess-marker', 14),
       interactive: false,
     }).addTo(map);
-    state.answerLayer = L.marker([truth.lat, truth.lng], {
-      icon: divIcon('answer-marker'),
+    state.currentAnswerLayer = L.marker([truth.lat, truth.lng], {
+      icon: divIcon('answer-marker', 14),
       interactive: false,
     })
-      .bindTooltip(truth.name, { permanent: true, direction: 'top', offset: [0, -8] })
+      .bindTooltip(truth.name, {
+        permanent: true,
+        direction: 'top',
+        offset: [0, -8],
+        className: 'current-label',
+      })
       .addTo(map);
-    state.lineLayer = L.polyline(
+    state.currentLineLayer = L.polyline(
       [
         [guess.lat, guess.lng],
         [truth.lat, truth.lng],
@@ -164,13 +222,21 @@
   }
 
   function startRound() {
-    clearRoundLayers();
+    // Demote prior round's markers (if any) before showing the new prompt.
+    if (state.roundIndex > 0) {
+      const prev = state.rounds[state.roundIndex - 1];
+      demoteCurrentToPast(prev.truth);
+    } else {
+      clearCurrentLayers();
+    }
+
     el.resultReadout.classList.add('hidden');
     el.nextBtn.classList.add('hidden');
     el.hint.classList.remove('hidden');
 
     const place = state.queue[state.roundIndex];
     el.placeName.textContent = place.name;
+    el.placePopulation.textContent = formatPopulation(place.population);
     el.roundCounter.textContent = `${state.roundIndex + 1} / ${state.queue.length}`;
     el.totalSoFar.textContent = formatKm(state.totalKm);
 
@@ -181,36 +247,92 @@
   function nextRound() {
     state.roundIndex += 1;
     if (state.roundIndex >= state.queue.length) {
-      showEndScreen();
+      showResults();
     } else {
       startRound();
     }
   }
 
-  function showEndScreen() {
-    el.game.classList.add('hidden');
-    el.end.classList.remove('hidden');
+  function showResults() {
+    // Drop the line + guess marker for the final round, but keep the current answer
+    // visible. Then redraw every round's guess+answer+line as persistent past layers.
+    if (state.currentLineLayer) { map.removeLayer(state.currentLineLayer); state.currentLineLayer = null; }
+    if (state.currentAnswerLayer) { map.removeLayer(state.currentAnswerLayer); state.currentAnswerLayer = null; }
+    if (state.currentGuessLayer) { map.removeLayer(state.currentGuessLayer); state.currentGuessLayer = null; }
+    for (const layer of state.pastLayers) map.removeLayer(layer);
+    state.pastLayers = [];
+
+    for (const r of state.rounds) {
+      const ans = L.marker([r.truth.lat, r.truth.lng], {
+        icon: divIcon('answer-marker-past', 9),
+        interactive: false,
+      })
+        .bindTooltip(r.truth.name, {
+          permanent: true,
+          direction: 'right',
+          offset: [6, 0],
+          className: 'past-label',
+        })
+        .addTo(map);
+      const guess = L.marker([r.guess.lat, r.guess.lng], {
+        icon: divIcon('guess-marker-past', 9),
+        interactive: false,
+      }).addTo(map);
+      const line = L.polyline(
+        [
+          [r.guess.lat, r.guess.lng],
+          [r.truth.lat, r.truth.lng],
+        ],
+        { color: css('--guess-past'), weight: 1.5, dashArray: '3 3', interactive: false }
+      ).addTo(map);
+      state.pastLayers.push(ans, guess, line);
+    }
+
+    map.fitBounds(UK_BOUNDS, { animate: true });
+
+    // Swap header + footer to results mode.
+    el.promptPlaying.classList.add('hidden');
+    el.promptResults.classList.remove('hidden');
     el.finalTotal.textContent = Math.round(state.totalKm).toLocaleString();
+    el.hint.classList.add('hidden');
+    el.resultReadout.classList.add('hidden');
+    el.nextBtn.classList.add('hidden');
+    el.restartBtn.classList.remove('hidden');
+
     el.breakdown.innerHTML = '';
-    for (const row of state.breakdown) {
+    for (const r of state.rounds) {
       const li = document.createElement('li');
       li.innerHTML = `<span class="place"></span><span class="dist"></span>`;
-      li.querySelector('.place').textContent = row.name;
-      li.querySelector('.dist').textContent = formatKm(row.km);
+      li.querySelector('.place').textContent = r.truth.name;
+      li.querySelector('.dist').textContent = formatKm(r.km);
       el.breakdown.appendChild(li);
     }
+    el.breakdownDetails.classList.remove('hidden');
+    el.breakdownDetails.open = false;
+
+    state.awaitingGuess = false;
   }
 
   function startGame() {
-    state.queue = shuffle(state.places).slice(0, ROUNDS);
+    const allowed = DIFFICULTY_INCLUDES[state.difficulty] || DIFFICULTY_INCLUDES.medium;
+    const pool = state.places.filter(
+      (p) => !p.exclude && allowed.has(p.difficulty)
+    );
+    if (pool.length < ROUNDS) {
+      console.warn('Place pool smaller than rounds:', pool.length);
+    }
+    state.queue = shuffle(pool).slice(0, ROUNDS);
     state.roundIndex = 0;
     state.totalKm = 0;
-    state.breakdown = [];
-    clearRoundLayers();
+    state.rounds = [];
+    clearAllLayers();
 
     el.start.classList.add('hidden');
-    el.end.classList.add('hidden');
     el.game.classList.remove('hidden');
+    el.promptPlaying.classList.remove('hidden');
+    el.promptResults.classList.add('hidden');
+    el.restartBtn.classList.add('hidden');
+    el.breakdownDetails.classList.add('hidden');
 
     // Leaflet needs a size invalidation after the container becomes visible.
     setTimeout(() => map.invalidateSize(), 0);
@@ -218,14 +340,28 @@
     startRound();
   }
 
+  function backToStart() {
+    clearAllLayers();
+    el.game.classList.add('hidden');
+    el.start.classList.remove('hidden');
+  }
+
   async function boot() {
     const placesRes = await fetch('data/places.json');
     state.places = await placesRes.json();
     await initMap();
 
+    el.difficultyBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        el.difficultyBtns.forEach((b) => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        state.difficulty = btn.dataset.difficulty;
+      });
+    });
+
     el.startBtn.addEventListener('click', startGame);
     el.nextBtn.addEventListener('click', nextRound);
-    el.restartBtn.addEventListener('click', startGame);
+    el.restartBtn.addEventListener('click', backToStart);
   }
 
   boot().catch((err) => {
