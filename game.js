@@ -28,6 +28,9 @@
     currentLineLayer: null,
     // Persistent layers from completed rounds.
     pastLayers: [],
+    // Optional overlay layers (rivers / motorways).
+    riversGeoLayer: null,
+    motorwaysGeoLayer: null,
   };
 
   const el = {
@@ -36,6 +39,8 @@
     startBtn: document.getElementById('start-btn'),
     nextBtn: document.getElementById('next-btn'),
     restartBtn: document.getElementById('restart-btn'),
+    showRivers: document.getElementById('show-rivers'),
+    showMotorways: document.getElementById('show-motorways'),
     roundCounter: document.getElementById('round-counter'),
     totalSoFar: document.getElementById('total-so-far'),
     placeName: document.getElementById('place-name'),
@@ -107,29 +112,39 @@
     });
     map.fitBounds(UK_BOUNDS);
 
-    const [outline, rivers] = await Promise.all([
-      fetch('data/uk_outline.geojson').then((r) => r.json()),
+    const [coastline, rivers, motorways] = await Promise.all([
+      fetch('data/uk_coastline.geojson').then((r) => r.json()),
       fetch('data/uk_rivers.geojson').then((r) => r.json()),
+      fetch('data/uk_motorways.geojson').then((r) => r.json()),
     ]);
 
-    L.geoJSON(outline, {
+    L.geoJSON(coastline, {
       style: {
         color: css('--land-stroke'),
         weight: 1,
-        fillColor: css('--land'),
-        fillOpacity: 1,
+        opacity: 0.9,
+        fill: false,
       },
       interactive: false,
     }).addTo(map);
 
-    L.geoJSON(rivers, {
+    state.riversGeoLayer = L.geoJSON(rivers, {
       style: {
         color: css('--river'),
         weight: 1.2,
         opacity: 0.85,
       },
       interactive: false,
-    }).addTo(map);
+    });
+
+    state.motorwaysGeoLayer = L.geoJSON(motorways, {
+      style: {
+        color: css('--motorway'),
+        weight: 1.8,
+        opacity: 0.85,
+      },
+      interactive: false,
+    });
 
     map.on('click', onMapClick);
   }
@@ -313,6 +328,20 @@
     state.awaitingGuess = false;
   }
 
+  function applyOverlays() {
+    if (!state.riversGeoLayer || !state.motorwaysGeoLayer) return;
+    if (el.showRivers.checked) {
+      if (!map.hasLayer(state.riversGeoLayer)) state.riversGeoLayer.addTo(map);
+    } else {
+      if (map.hasLayer(state.riversGeoLayer)) map.removeLayer(state.riversGeoLayer);
+    }
+    if (el.showMotorways.checked) {
+      if (!map.hasLayer(state.motorwaysGeoLayer)) state.motorwaysGeoLayer.addTo(map);
+    } else {
+      if (map.hasLayer(state.motorwaysGeoLayer)) map.removeLayer(state.motorwaysGeoLayer);
+    }
+  }
+
   function startGame() {
     const allowed = DIFFICULTY_INCLUDES[state.difficulty] || DIFFICULTY_INCLUDES.medium;
     const pool = state.places.filter(
@@ -335,13 +364,15 @@
     el.breakdownDetails.classList.add('hidden');
 
     // Leaflet needs a size invalidation after the container becomes visible.
-    setTimeout(() => map.invalidateSize(), 0);
+    setTimeout(() => { map.invalidateSize(); applyOverlays(); }, 0);
 
     startRound();
   }
 
   function backToStart() {
     clearAllLayers();
+    if (state.riversGeoLayer && map.hasLayer(state.riversGeoLayer)) map.removeLayer(state.riversGeoLayer);
+    if (state.motorwaysGeoLayer && map.hasLayer(state.motorwaysGeoLayer)) map.removeLayer(state.motorwaysGeoLayer);
     el.game.classList.add('hidden');
     el.start.classList.remove('hidden');
   }
