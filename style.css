@@ -1,0 +1,190 @@
+:root {
+  --bg: #eaf2ef;
+  --land: #f7f3e8;
+  --land-stroke: #2d4a3e;
+  --water: #bcd9e0;
+  --river: #6ea4b0;
+  --accent: #0b3d2e;
+  --accent-strong: #073023;
+  --correct: #2e8b57;
+  --guess: #c0392b;
+  --text: #1d1d1f;
+  --muted: #5a5a5a;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+  background: var(--water);
+  -webkit-text-size-adjust: 100%;
+}
+
+#app, .screen {
+  height: 100dvh;
+  width: 100vw;
+}
+
+.screen {
+  display: flex;
+  flex-direction: column;
+}
+
+.hidden { display: none !important; }
+
+/* --- Start & end screens --- */
+
+#start-screen, #end-screen {
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--bg);
+}
+
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  max-width: 28rem;
+  width: 100%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.card h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.75rem;
+  color: var(--accent);
+}
+
+.card p { margin: 0 0 1.25rem; color: var(--muted); line-height: 1.5; }
+
+.total { font-size: 2rem; font-weight: 700; color: var(--accent); margin: 1rem 0; }
+
+#breakdown {
+  text-align: left;
+  margin: 0 0 1.5rem;
+  padding-left: 1.25rem;
+  max-height: 40vh;
+  overflow-y: auto;
+  font-size: 0.95rem;
+}
+
+#breakdown li {
+  padding: 0.25rem 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+#breakdown li .place { color: var(--text); }
+#breakdown li .dist { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+button.primary {
+  appearance: none;
+  border: none;
+  background: var(--accent);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.85rem 1.5rem;
+  border-radius: 999px;
+  cursor: pointer;
+  min-width: 8rem;
+  touch-action: manipulation;
+}
+
+button.primary:hover { background: var(--accent-strong); }
+button.primary:active { transform: scale(0.98); }
+
+/* --- Game screen --- */
+
+#game-screen { background: var(--water); }
+
+#game-header {
+  background: var(--accent);
+  color: white;
+  padding: 0.6rem 1rem 0.75rem;
+  flex-shrink: 0;
+  z-index: 500;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.round-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  opacity: 0.85;
+  margin-bottom: 0.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.prompt {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.prompt-label {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+#place-name {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+#map {
+  flex: 1;
+  width: 100%;
+  background: var(--water);
+  cursor: crosshair;
+}
+
+.leaflet-container { background: var(--water); outline: none; }
+
+#game-footer {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem env(safe-area-inset-bottom);
+  background: white;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 4rem;
+}
+
+.hint { margin: 0; color: var(--muted); font-size: 0.9rem; }
+
+#result-readout {
+  font-size: 1.1rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+#distance-readout { color: var(--accent); }
+
+/* --- Map markers --- */
+
+.guess-marker, .answer-marker {
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.guess-marker { background: var(--guess); width: 14px; height: 14px; }
+.answer-marker { background: var(--correct); width: 14px; height: 14px; }
+
+@media (min-width: 720px) {
+  #place-name { font-size: 1.6rem; }
+  .round-info { font-size: 0.9rem; }
+}
